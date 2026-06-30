@@ -1,0 +1,7 @@
+package com.fitconnect.fitconnect_backend.exception;
+
+public class DuplicateMembershipException extends RuntimeException {
+    public DuplicateMembershipException(String message) {
+        super(message);
+    }
+}
