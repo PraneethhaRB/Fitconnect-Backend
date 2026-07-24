@@ -35,5 +35,9 @@ private Role role= Role.USER;
 private java.time.LocalDateTime createdAt = java.time.LocalDateTime.now();
 private Integer checkInCount = 0;
 private LocalDateTime lastCheckInAt;
+private Integer currentStreak=0;
+private Integer longestStreak=0;
+@Enumerated(EnumType.STRING)
+private GoalCategory goalCategory = GoalCategory.GENERAL_FITNESS;
 
 }

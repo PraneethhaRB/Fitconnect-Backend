@@ -16,4 +16,5 @@ public class ChatMessageResponse {
     private String imageUrl;
     private String imageCaption;
     private LocalDateTime sentAt;
+    private String milestoneMessage; // null most of the time
 }

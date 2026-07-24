@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fitconnect.fitconnect_backend.dto.request.CreateCommunityRequest;
 import com.fitconnect.fitconnect_backend.dto.response.ApiResponse;
 import com.fitconnect.fitconnect_backend.dto.response.CommunityResponse;
+import com.fitconnect.fitconnect_backend.dto.response.LeaderboardEntryResponse;
 import com.fitconnect.fitconnect_backend.dto.response.MembershipResponse;
 import com.fitconnect.fitconnect_backend.security.SecurityUtils;
 import com.fitconnect.fitconnect_backend.service.CommunityService;
@@ -58,6 +59,13 @@ public ResponseEntity<ApiResponse<CommunityResponse>> create(@Valid @RequestBody
     String email = SecurityUtils.getCurrentUserEmail();
     CommunityResponse response = communityService.createCommunity(email, request);
     return ResponseEntity.ok(ApiResponse.success(response, "Community created"));
+}
+@GetMapping("/{communityId}/leaderboard")
+public ResponseEntity<ApiResponse<List<LeaderboardEntryResponse>>> getLeaderboard(
+        @PathVariable Long communityId) {
+    List<LeaderboardEntryResponse> leaderboard =
+            communityService.getLeaderboard(communityId);
+    return ResponseEntity.ok(ApiResponse.success(leaderboard, "Leaderboard fetched"));
 }
 
 }

@@ -2,6 +2,7 @@ package com.fitconnect.fitconnect_backend.service;
 
 import com.fitconnect.fitconnect_backend.dto.request.*;
 import com.fitconnect.fitconnect_backend.dto.response.*;
+import com.fitconnect.fitconnect_backend.entity.GoalCategory;
 // import com.fitconnect.dto.request.SignupRequest;
 // import com.fitconnect.dto.response.AuthResponse;
 // import com.fitconnect.dto.response.UserProfileResponse;
@@ -44,6 +45,15 @@ public class AuthService {
 
         User saved = userRepository.save(user);
         String token = jwtService.generateToken(saved);
+        if (request.getGoalCategory() != null) {
+    try {
+        user.setGoalCategory(
+            GoalCategory.valueOf(request.getGoalCategory().toUpperCase())
+        );
+    } catch (IllegalArgumentException e) {
+        user.setGoalCategory(GoalCategory.GENERAL_FITNESS);
+    }
+}
 
         return new AuthResponse(token, toProfile(saved));
     }
@@ -62,14 +72,12 @@ public class AuthService {
 
     private UserProfileResponse toProfile(User user) {
         return new UserProfileResponse(
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getAvatarColor(),
-                user.getGoalText(),
-                user.getGoalProgress(),
-                user.getCheckInCount(),
-                user.getLastCheckInAt()
+            user.getId(), user.getName(), user.getEmail(),
+            user.getAvatarColor(), user.getGoalText(), user.getGoalProgress(),
+            user.getCheckInCount() != null ? user.getCheckInCount() : 0,
+            user.getLastCheckInAt(),
+            user.getCurrentStreak() != null ? user.getCurrentStreak() : 0,
+            user.getLongestStreak() != null ? user.getLongestStreak() : 0
         );
     }
 }

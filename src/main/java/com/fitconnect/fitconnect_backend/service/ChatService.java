@@ -12,7 +12,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Collections;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,7 +43,8 @@ public class ChatService {
         return messages.stream().map(this::toResponse).collect(Collectors.toList());
     }
 
-    public ChatMessageResponse sendMessage(String email, Long communityId, String text, String imageCaption, MultipartFile image) {
+    public ChatMessageResponse sendMessage(String email, Long communityId, String text,
+                                           String imageCaption, MultipartFile image) {
         User sender = verifyIsApprovedMember(email, communityId);
 
         if ((text == null || text.isBlank()) && (image == null || image.isEmpty())) {
@@ -58,23 +60,67 @@ public class ChatService {
         message.setText(text);
         message.setImageCaption(imageCaption);
 
+        // track milestone separately — populated only if image is sent
+        String milestone = null;
+
         if (image != null && !image.isEmpty()) {
             String imageUrl = storageService.store(image, communityId);
             message.setImageUrl(imageUrl);
-        
-            // This counts as a progress check-in
-            sender.setCheckInCount(sender.getCheckInCount() + 1);
-            sender.setLastCheckInAt(java.time.LocalDateTime.now());
-        
-            int newProgress = Math.min(100, sender.getCheckInCount() * 5); // each check-in = +5%, capped at 100
+
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime lastCheckIn = sender.getLastCheckInAt();
+
+            // increment check-in count
+            int newCount = (sender.getCheckInCount() != null ? sender.getCheckInCount() : 0) + 1;
+            sender.setCheckInCount(newCount);
+            sender.setLastCheckInAt(now);
+
+            // streak logic
+            int currentStreak = sender.getCurrentStreak() != null ? sender.getCurrentStreak() : 0;
+
+            if (lastCheckIn == null) {
+                currentStreak = 1;
+            } else {
+                long daysSinceLast = ChronoUnit.DAYS.between(
+                        lastCheckIn.toLocalDate(), now.toLocalDate());
+
+                if (daysSinceLast == 1) {
+                    currentStreak += 1;
+                } else if (daysSinceLast == 0) {
+                    // same day — no change
+                } else {
+                    currentStreak = 1;
+                }
+            }
+
+            sender.setCurrentStreak(currentStreak);
+
+            int longest = sender.getLongestStreak() != null ? sender.getLongestStreak() : 0;
+            if (currentStreak > longest) {
+                sender.setLongestStreak(currentStreak);
+            }
+
+            int newProgress = Math.min(100, newCount * 5);
             sender.setGoalProgress(newProgress);
-        
+
             userRepository.save(sender);
+
+            // check milestone AFTER saving so counts are final
+            milestone = checkMilestone(newCount, currentStreak);
         }
+
+        // save the message ONCE, outside the image block
         ChatMessage saved = chatMessageRepository.save(message);
+
+        // build response ONCE, after saved exists
         ChatMessageResponse response = toResponse(saved);
 
-        // Push to everyone subscribed to this community's chat topic
+        // attach milestone if one was triggered
+        if (milestone != null) {
+            response.setMilestoneMessage(milestone);
+        }
+
+        // broadcast to all WebSocket subscribers
         messagingTemplate.convertAndSend("/topic/community/" + communityId, response);
 
         return response;
@@ -84,7 +130,8 @@ public class ChatService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        Membership membership = membershipRepository.findByUserIdAndCommunityId(user.getId(), communityId)
+        Membership membership = membershipRepository
+                .findByUserIdAndCommunityId(user.getId(), communityId)
                 .orElseThrow(() -> new ForbiddenActionException("You are not a member of this community"));
 
         if (membership.getStatus() != MembershipStatus.APPROVED) {
@@ -103,7 +150,18 @@ public class ChatService {
                 m.getText(),
                 m.getImageUrl(),
                 m.getImageCaption(),
-                m.getSentAt()
+                m.getSentAt(),
+                null // milestoneMessage defaults to null — set explicitly after if needed
         );
+    }
+
+    private String checkMilestone(int checkInCount, int streak) {
+        if (checkInCount == 1)  return "First check-in! Your journey starts now 🚀";
+        if (checkInCount == 5)  return "5 check-ins! You're building a habit 💪";
+        if (checkInCount == 10) return "10 check-ins! Double digits! 🎯";
+        if (checkInCount == 20) return "20 check-ins! Goal complete! 🏆";
+        if (streak == 7)        return "7-day streak! A full week of consistency 🔥";
+        if (streak == 30)       return "30-day streak! You're unstoppable 🌟";
+        return null;
     }
 }

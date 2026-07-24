@@ -18,14 +18,14 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<DashboardResponse>> getDashboard(
-            @RequestParam(required = false) Double lat,
-            @RequestParam(required = false) Double lng) {
-        String email = SecurityUtils.getCurrentUserEmail();
-        DashboardResponse response = dashboardService.getDashboard(email, lat, lng);
-        return ResponseEntity.ok(ApiResponse.success(response, "Dashboard loaded"));
-    }
+    // @GetMapping
+    // public ResponseEntity<ApiResponse<DashboardResponse>> getDashboard(
+    //         @RequestParam(required = false) Double lat,
+    //         @RequestParam(required = false) Double lng) {
+    //     String email = SecurityUtils.getCurrentUserEmail();
+    //     DashboardResponse response = dashboardService.getDashboard(email, lat, lng);
+    //     return ResponseEntity.ok(ApiResponse.success(response, "Dashboard loaded"));
+    // }
 
     @PutMapping("/goal")
     public ResponseEntity<ApiResponse<UserProfileResponse>> updateGoal(@Valid @RequestBody GoalUpdateRequest request) {
@@ -33,4 +33,12 @@ public class DashboardController {
         UserProfileResponse response = dashboardService.updateGoal(email, request);
         return ResponseEntity.ok(ApiResponse.success(response, "Goal updated"));
     }
+    @GetMapping
+public ResponseEntity<ApiResponse<DashboardResponse>> getDashboard(
+        @RequestParam(required = false) Double lat,
+        @RequestParam(required = false) Double lng) {
+    String email = SecurityUtils.getCurrentUserEmail();
+    DashboardResponse response = dashboardService.getDashboard(email, lat, lng);
+    return ResponseEntity.ok(ApiResponse.success(response, "Dashboard loaded"));
+}
 }

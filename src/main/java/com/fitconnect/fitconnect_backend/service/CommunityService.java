@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 
 import com.fitconnect.fitconnect_backend.dto.request.CreateCommunityRequest;
 import com.fitconnect.fitconnect_backend.dto.response.CommunityResponse;
+import com.fitconnect.fitconnect_backend.dto.response.LeaderboardEntryResponse;
+
 import com.fitconnect.fitconnect_backend.dto.response.MembershipResponse;
 import com.fitconnect.fitconnect_backend.entity.Communityy;
 import com.fitconnect.fitconnect_backend.entity.Membership;
@@ -112,6 +114,38 @@ public CommunityResponse createCommunity(String creatorEmail, CreateCommunityReq
     return toCommunityResponse(saved, "APPROVED", creator.getId());
     // "APPROVED" here is cosmetic — the creator is admin, not a regular member;
     // frontend just needs *some* status so the card renders sensibly
+}
+public List<LeaderboardEntryResponse> getLeaderboard(Long communityId) {
+    communityRepository.findById(communityId)
+            .orElseThrow(() -> new ResourceNotFoundException("Community not found"));
+
+    List<Membership> members = membershipRepository
+            .findByCommunityIdAndStatus(communityId, MembershipStatus.APPROVED);
+
+    List<LeaderboardEntryResponse> leaderboard = new java.util.ArrayList<>();
+
+    for (int i = 0; i < members.size(); i++) {
+        User user = members.get(i).getUser();
+        leaderboard.add(new LeaderboardEntryResponse(
+                user.getId(),
+                user.getName(),
+                user.getAvatarColor(),
+                user.getCheckInCount() != null ? user.getCheckInCount() : 0,
+                user.getCurrentStreak() != null ? user.getCurrentStreak() : 0,
+                user.getGoalProgress() != null ? user.getGoalProgress() : 0,
+                0 // rank assigned after sorting
+        ));
+    }
+
+    // sort by check-in count descending
+    leaderboard.sort((a, b) -> b.getCheckInCount() - a.getCheckInCount());
+
+    // assign ranks after sorting
+    for (int i = 0; i < leaderboard.size(); i++) {
+        leaderboard.get(i).setRank(i + 1);
+    }
+
+    return leaderboard;
 }
 private CommunityResponse toCommunityResponse(Communityy c, String status, Long currentUserId) {
     long memberCount = membershipRepository.countByCommunityIdAndStatus(c.getId(), MembershipStatus.APPROVED);

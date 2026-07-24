@@ -1,9 +1,7 @@
 package com.fitconnect.fitconnect_backend.dto.response;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
 import java.util.List;
 
 @Data
@@ -14,4 +12,5 @@ public class DashboardResponse {
     private List<CommunityResponse> recommendedCommunities;
     private List<LabOfferResponse> nearbyLabOffers;
     private List<CommunityResponse> pendingCommunities;
+    private WorkoutSuggestionResponse workoutSuggestion;
 }
