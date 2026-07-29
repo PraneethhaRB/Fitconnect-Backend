@@ -6,7 +6,7 @@ FitConnect is inspired by the social layer of platforms like Strava, but instead
 
 Users can join communities based on goals such as **weight loss, muscle building, and healthy lifestyle improvement**, share progress updates through real-time chat, receive AI-generated coaching, and access health-related recommendations throughout their fitness journey.
 
----
+
 
 # Why FitConnect is Different
 
