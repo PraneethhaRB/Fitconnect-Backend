@@ -10,7 +10,11 @@ import com.fitconnect.fitconnect_backend.dto.response.ApiResponse;
 import com.fitconnect.fitconnect_backend.dto.response.CommunityResponse;
 import com.fitconnect.fitconnect_backend.dto.response.LeaderboardEntryResponse;
 import com.fitconnect.fitconnect_backend.dto.response.MembershipResponse;
+import com.fitconnect.fitconnect_backend.entity.User;
+import com.fitconnect.fitconnect_backend.exception.ResourceNotFoundException;
+import com.fitconnect.fitconnect_backend.repository.UserRepository;
 import com.fitconnect.fitconnect_backend.security.SecurityUtils;
+import com.fitconnect.fitconnect_backend.service.CoachAgentService;
 import com.fitconnect.fitconnect_backend.service.CommunityService;
 
 import jakarta.validation.Valid;
@@ -27,6 +31,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class CommunityController {
 @Autowired
 CommunityService  communityService;
+@Autowired
+UserRepository userRepository;
+@Autowired
+CoachAgentService coachAgentService;
 @PostMapping("/{communityId}/join")
 public ResponseEntity<ApiResponse<Object>> requestToJoin(@PathVariable Long communityId) {
     //TODO: process POST request
@@ -67,5 +75,13 @@ public ResponseEntity<ApiResponse<List<LeaderboardEntryResponse>>> getLeaderboar
             communityService.getLeaderboard(communityId);
     return ResponseEntity.ok(ApiResponse.success(leaderboard, "Leaderboard fetched"));
 }
-
+@GetMapping("/{communityId}/coach")
+public ResponseEntity<ApiResponse<String>> getCoachInsight(
+        @PathVariable Long communityId) {
+    String email = SecurityUtils.getCurrentUserEmail();
+    User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    String insight = coachAgentService.generateCoachingInsight(user.getId(), communityId);
+    return ResponseEntity.ok(ApiResponse.success(insight, "Coach insight generated"));
+}
 }
