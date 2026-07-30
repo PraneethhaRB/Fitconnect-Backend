@@ -425,3 +425,14 @@ FitConnect transforms fitness from a solo tracking activity into an **AI-assiste
 The platform demonstrates the integration of:
 
 **Full Stack Development + AI Agents + RAG + Real-Time Systems + Secure Architecture**
+
+
+<img width="1512" height="982" alt="Screenshot 2026-07-30 at 4 11 01 PM" src="https://github.com/user-attachments/assets/da9c71fa-5eb6-42c8-8246-d33baba0eb78" />
+<img width="1512" height="982" alt="Screenshot 2026-07-30 at 4 11 07 PM" src="https://github.com/user-attachments/assets/3a79f563-293b-4b0b-ada4-fe93cb5af497" />
+<img width="1512" height="982" alt="Screenshot 2026-07-30 at 4 11 48 PM" src="https://github.com/user-attachments/assets/9eea99bc-2e37-4529-bf50-04dc982c1303" />
+<img width="1512" height="982" alt="Screenshot 2026-07-30 at 4 12 19 PM" src="https://github.com/user-attachments/assets/4589f79b-0828-4868-bfeb-9977420be2f1" />
+<img width="1512" height="982" alt="Screenshot 2026-07-30 at 4 12 27 PM" src="https://github.com/user-attachments/assets/b884cac2-3e73-4b00-909f-06b0a5a5b909" />
+<img width="1512" height="982" alt="Screenshot 2026-07-30 at 4 12 37 PM" src="https://github.com/user-attachments/assets/3f087914-0f37-425a-ac7b-b789f3e17dd8" />
+<img width="1512" height="982" alt="Screenshot 2026-07-30 at 4 13 13 PM" src="https://github.com/user-attachments/assets/5a55e55a-1cd1-4ba7-b4ad-1fc8bca4c20b" />
+
+
