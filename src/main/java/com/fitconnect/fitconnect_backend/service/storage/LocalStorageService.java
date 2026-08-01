@@ -1,28 +1,35 @@
 package com.fitconnect.fitconnect_backend.service.storage;
 
-import org.springframework.stereotype.Service;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Value;
-
+import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
 public class LocalStorageService implements StorageService {
 
-    @Value("${app.upload.dir}")
-    private String uploadDir;
-
-    @Value("${app.base-url}")
-    private String baseUrl;
+    private final Cloudinary cloudinary;
 
     private static final List<String> ALLOWED_TYPES =
             List.of("image/jpeg", "image/png", "image/webp");
+
+    public LocalStorageService(
+            @Value("${cloudinary.cloud-name}") String cloudName,
+            @Value("${cloudinary.api-key}") String apiKey,
+            @Value("${cloudinary.api-secret}") String apiSecret) {
+        this.cloudinary = new Cloudinary(ObjectUtils.asMap(
+                "cloud_name", cloudName,
+                "api_key", apiKey,
+                "api_secret", apiSecret,
+                "secure", true
+        ));
+    }
 
     @Override
     public String store(MultipartFile file, Long communityId) {
@@ -35,32 +42,20 @@ public class LocalStorageService implements StorageService {
             throw new IllegalArgumentException("Only JPEG, PNG, or WEBP images are allowed");
         }
 
-        String extension = switch (contentType) {
-            case "image/jpeg" -> ".jpg";
-            case "image/png" -> ".png";
-            case "image/webp" -> ".webp";
-            default -> "";
-        };
-
-        String filename = UUID.randomUUID() + extension;
+        String publicId = "chat/" + communityId + "/" + UUID.randomUUID();
 
         try {
-            Path communityDir = Paths.get(uploadDir, "chat", communityId.toString()).normalize().toAbsolutePath();
-            Files.createDirectories(communityDir);
-
-            Path targetPath = communityDir.resolve(filename).normalize();
-
-            // Path traversal guard: resolved path must still be inside communityDir
-            if (!targetPath.startsWith(communityDir)) {
-                throw new SecurityException("Invalid file path");
-            }
-
-            file.transferTo(targetPath);
-
+            Map<?, ?> uploadResult = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "public_id", publicId,
+                            "resource_type", "image",
+                            "overwrite", false
+                    )
+            );
+            return (String) uploadResult.get("secure_url");
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file", e);
         }
-
-        return baseUrl + "/files/chat/" + communityId + "/" + filename;
     }
 }
