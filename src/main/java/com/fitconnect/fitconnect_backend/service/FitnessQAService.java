@@ -18,16 +18,17 @@ public class FitnessQAService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public String answer(String question, String userGoal, GoalCategory goalCategory) {
-        String goalCategoryStr = goalCategory != null
-                ? goalCategory.name()
-                : "GENERAL_FITNESS";
+   public String answer(String question, String userGoal, GoalCategory goalCategory) {
+    String goalCategoryStr = goalCategory != null
+            ? goalCategory.name()
+            : "GENERAL_FITNESS";
 
+    try {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, Object> body = Map.of(
-            "question", question,
+            "question", question != null ? question : "",
             "user_goal", userGoal != null ? userGoal : "general fitness",
             "goal_category", goalCategoryStr,
             "top_k", 3
@@ -35,18 +36,16 @@ public class FitnessQAService {
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-        try {
-            Map response = restTemplate.postForObject(
-                ragServiceUrl + "/ask",
-                entity,
-                Map.class
-            );
-            return (String) response.get("answer");
+        Map response = restTemplate.postForObject(
+            ragServiceUrl + "/ask",
+            entity,
+            Map.class
+        );
+        return (String) response.get("answer");
 
-        } catch (Exception e) {
-            // fallback if RAG service is unavailable
-            return "Our fitness knowledge service is temporarily unavailable. "
-                   + "Please try again in a moment.";
-        }
+    } catch (Exception e) {
+        return "Our fitness knowledge service is temporarily unavailable. "
+               + "Please try again in a moment.";
     }
+}
 }
