@@ -50,17 +50,19 @@ public ResponseEntity<ApiResponse<DashboardResponse>> getDashboard(
     DashboardResponse response = dashboardService.getDashboard(email, lat, lng);
     return ResponseEntity.ok(ApiResponse.success(response, "Dashboard loaded"));
 }
-// DashboardController.java
-@PostMapping("/ask")
+// DashboardController.java@PostMapping("/ask")
 public ResponseEntity<ApiResponse<String>> askFitnessQuestion(
         @RequestBody Map<String, String> body) {
     String email = SecurityUtils.getCurrentUserEmail();
     User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
     String question = body.get("question");
-    String answer = fitnessQAService.answer(question,
-            user.getGoalText() != null ? user.getGoalText() : "general fitness");
+    String answer = fitnessQAService.answer(
+        question,
+        user.getGoalText(),
+        user.getGoalCategory()  // now passed through to RAG service
+    );
     return ResponseEntity.ok(ApiResponse.success(answer, "Answer generated"));
 }
-
 }
