@@ -50,7 +50,7 @@ public ResponseEntity<ApiResponse<DashboardResponse>> getDashboard(
     DashboardResponse response = dashboardService.getDashboard(email, lat, lng);
     return ResponseEntity.ok(ApiResponse.success(response, "Dashboard loaded"));
 }
-// DashboardController.java@PostMapping("/ask")
+@PostMapping("/ask")
 public ResponseEntity<ApiResponse<String>> askFitnessQuestion(
         @RequestBody Map<String, String> body) {
     String email = SecurityUtils.getCurrentUserEmail();
