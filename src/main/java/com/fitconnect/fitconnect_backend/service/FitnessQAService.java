@@ -1,69 +1,52 @@
 package com.fitconnect.fitconnect_backend.service;
 
+import com.fitconnect.fitconnect_backend.entity.GoalCategory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.List;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class FitnessQAService {
 
-    @Value("${groq.api.key}")
-private String groqKey;
+    @Value("${rag.service.url:http://localhost:8001}")
+    private String ragServiceUrl;
 
-    private final FitnessKnowledgeBase knowledgeBase;
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public String answer(String question, String userGoal) {
-        // Step 1: RETRIEVE relevant context from knowledge base
-        String retrievedContext = knowledgeBase.retrieve(question);
-
-        // Step 2: AUGMENT the prompt with retrieved context
-        String prompt = String.format("""
-            You are a knowledgeable fitness advisor. Answer the user's question
-            using ONLY the provided context below. If the context doesn't cover
-            the question, say so and give a brief general answer.
-            
-            User's current goal: %s
-            
-            Retrieved fitness knowledge:
-            ---
-            %s
-            ---
-            
-            User's question: %s
-            
-            Provide a specific, practical answer in 2-3 sentences.
-            """, userGoal, retrievedContext, question);
+    public String answer(String question, String userGoal, GoalCategory goalCategory) {
+        String goalCategoryStr = goalCategory != null
+                ? goalCategory.name()
+                : "GENERAL_FITNESS";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(groqKey);
 
         Map<String, Object> body = Map.of(
-            "model", "llama-3.3-70b-versatile",
-            "max_tokens", 200,
-            "messages", List.of(
-                Map.of("role", "user", "content", prompt)
-            )
+            "question", question,
+            "user_goal", userGoal != null ? userGoal : "general fitness",
+            "goal_category", goalCategoryStr,
+            "top_k", 3
         );
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+
         try {
             Map response = restTemplate.postForObject(
-                "https://api.groq.com/openai/v1/chat/completions",
-                new HttpEntity<>(body, headers),
+                ragServiceUrl + "/ask",
+                entity,
                 Map.class
             );
-            List<Map> choices = (List<Map>) response.get("choices");
-            Map message = (Map) choices.get(0).get("message");
-            return (String) message.get("content");
-            
+            return (String) response.get("answer");
+
         } catch (Exception e) {
-            return "I couldn't retrieve an answer right now. Please try again.";
+            // fallback if RAG service is unavailable
+            return "Our fitness knowledge service is temporarily unavailable. "
+                   + "Please try again in a moment.";
         }
     }
 }
